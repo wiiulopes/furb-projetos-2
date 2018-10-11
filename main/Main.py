@@ -42,14 +42,12 @@ def funcCadastrar(conecta):
     lng = float(raw_input("Longitude: "))
     cursor = conecta.cursor()
 
-    sql = "INSERT INTO coordenada (lat,lng,ponto_interesse) VALUES (lat,lng,'" + pontoInteresse + "')"
-
     try:
-        cursor.execute(sql)
+        cursor.execute("""INSERT INTO coordenada (lat,lng,ponto_interesse) VALUES (%s, %s, %s)""",(lat,lng,pontoInteresse))
         conecta.commit()
 
     except pymysql.Error, e:
-        print "Erro: " + sql
+        print "Erro: " + cursor
         print e
 
     print "Dados gravados com sucesso."
