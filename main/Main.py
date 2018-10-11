@@ -1,5 +1,5 @@
-# Autor: Fernando Krein Pinheiro
-# Data: 08/03/2012
+# Autor: Wiiu Lopes
+# Data: 10/10/2018
 # Linguagem: Python
 
 # ========= IMPORTANTE ===========
