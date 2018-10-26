@@ -11,7 +11,6 @@
 #! /usr/bin/env python
 
 import time
-import os
 import sys
 import pymysql
 
@@ -163,16 +162,52 @@ def funcMostrarTodos(conecta):
 	menu = raw_input()
 	opcaoUsuario()
 
+def funcCoordenada(conecta):
+	print "\n\nDigite os dados:\n"
+	raio = float(raw_input("Informe o tamanho do raio: "))
+	lat = float(raw_input("Latitude: "))
+	lng = float(raw_input("Longitude: "))
+	resultados = 0
+
+	cursor = conecta.cursor()
+	sql = ("SELECT *, (6371 * acos(cos(radians('"+lat+"')) * cos(radians(lat)) * cos(radians('"+lng+"')- radians(lng)) + sin(radians('" + lat + "')) * sin(radians(lat))))AS distance FROM coordenada HAVING distance <= '" + raio + "')")
+
+	try:
+		cursor.execute(sql)
+		resultado = cursor.fetchall()
+
+		for dados in resultado:
+			ide = dados[0]
+			lat = dados[1]
+			lng = dados[2]
+			ponto_interesse = dados[3]
+			distance = dados[4]
+			resultados = int(resultados)
+			resultados = resultados = + 1
+			print"------------------------------"
+			print " ID: %s\n Latitude: %s\n Longitude: %s\n Ponto de Interesse: %s\n Distancia: %s" %(
+				ide, lat, lng, ponto_interesse, distance)
+		conecta.commit()
+
+	except pymysql.Error, e:
+		print "Erro: " + sql
+		print e
+
+	print "\n\nForam encontrados %d resultados" % resultados
+	conecta.close
+	menu = raw_input()
+	opcaoUsuario()
+
 #=========================================================================================================================
 def opcaoUsuario():
 	print "==================================="
 	print "======= Banco de Coordenadas ========"
 	print "==================================="
-	opcao = raw_input("Escolha a opcao desejada\n\n[1] - Cadastrar\n[2] - Consultar\n[3] - Alterar\n[4] - Excluir\n[5] - Mostrar Todos\n[6] - Sair")
+	opcao = raw_input("Escolha a opcao desejada\n\n[1] - Cadastrar\n[2] - Consultar\n[3] - Alterar\n[4] - Excluir\n[5] - Mostrar Todos\n[6] - Sair \n[7] - Consulta Ponto Interesse no Raio")
 
 	try:
 		opcao = int(opcao)
-		if opcao<1 or opcao>6:
+		if opcao < 1 or opcao > 7:
 			print "OPCAO INVALIDA: Verifique o valor digitado"
 			time.sleep(2)
 			opcaoUsuario()
@@ -202,6 +237,10 @@ def opcaoUsuario():
 
 	elif opcao == 6:
 		sys.exit()
+
+	elif opcao == 7:
+		conecta = conectaBanco()
+		funcCoordenada(conecta)
 
 #=========================================================================================================================
 if __name__=='__main__':
