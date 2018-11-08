@@ -8,30 +8,31 @@
 # mantida sua fonte e seu autor.
 # Obrigado.
 
-#! /usr/bin/env python
+# ! /usr/bin/env python
 
 import time
 import sys
 import pymysql
+import pyttsx
 
-#=========================================================================================================================
+# =========================================================================================================================
 def conectaBanco():
+    HOST = "localhost"
+    USER = "root"
+    PASSWD = "Wiiu12345*"
+    BANCO = "vision"
 
-	HOST = "localhost"
-	USER = "root"
-	PASSWD = "Wiiu12345*"
-	BANCO = "vision"
+    try:
+        conecta = pymysql.connect(HOST, USER, PASSWD)
+        conecta.select_db(BANCO)
 
-	try:
-		conecta = pymysql.connect(HOST, USER, PASSWD)
-		conecta.select_db(BANCO)
+    except pymysql.Error, e:
+        print "Erro: O banco especificado nao foi encontrado...", e
+        menu = raw_input()
+        opcaoUsuario()
 
-    	except pymysql.Error, e:
-        	print "Erro: O banco especificado nao foi encontrado...",e
-		menu = raw_input()
-		opcaoUsuario()
+    return conecta
 
-	return conecta
 
 def funcCadastrar(conecta):
     print "\n\nDigite os dados:\n"
@@ -42,7 +43,8 @@ def funcCadastrar(conecta):
     cursor = conecta.cursor()
 
     try:
-        cursor.execute("""INSERT INTO coordenada (lat,lng,ponto_interesse) VALUES (%s, %s, %s)""",(lat,lng,pontoInteresse))
+        cursor.execute("""INSERT INTO coordenada (lat,lng,ponto_interesse) VALUES (%s, %s, %s)""",
+                       (lat, lng, pontoInteresse))
         conecta.commit()
 
     except pymysql.Error, e:
@@ -54,39 +56,39 @@ def funcCadastrar(conecta):
     menu = raw_input()
     opcaoUsuario()
 
+
 def funcConsultar(conecta):
+    name = str(raw_input("\nDigite o Ponto Interesse a Pesquisar: "))
+    name = (name.upper())
+    resultados = 0
+    cursor = conecta.cursor()
+    sql = ("SELECT * FROM coordenada WHERE ponto_interesse LIKE '%" + name + "%'")
 
-	name = str(raw_input("\nDigite o Ponto Interesse a Pesquisar: "))
-	name = (name.upper())
-	resultados = 0
-	cursor = conecta.cursor()
-	sql = ("SELECT * FROM coordenada WHERE ponto_interesse LIKE '%"+name+"%'")
+    try:
+        cursor.execute(sql)
+        resultado = cursor.fetchall()
 
+        for dados in resultado:
+            ide = dados[0]
+            lat = dados[1]
+            lng = dados[2]
+            ponto_interesse = dados[3]
+            resultados = int(resultados)
+            resultados = resultados + 1
+            print"----------------------------------"
+            print " ID: %s\n Latitude: %s\n Longitude: %s\n Ponto de Interesse: %s" % (
+                ide, lat, lng, ponto_interesse)
+        conecta.commit()
 
-	try:
-		cursor.execute(sql)
-		resultado = cursor.fetchall()
+    except pymysql.Error, e:
+        print "Erro: " + sql
+        print e
 
-		for dados in resultado:
-			ide = dados[0]
-			lat = dados[1]
-			lng = dados[2]
-			ponto_interesse = dados[3]
-			resultados = int(resultados)
-			resultados = resultados + 1
-			print"----------------------------------"
-			print " ID: %s\n Latitude: %s\n Longitude: %s\n Ponto de Interesse: %s" % (
-				ide, lat, lng, ponto_interesse)
-		conecta.commit()
+    print "\n\nForam encontrados %d resultados" % resultados
+    conecta.close()
+    menu = raw_input()
+    opcaoUsuario()
 
-	except pymysql.Error, e:
-		print "Erro: " + sql
-		print e
-
-	print "\n\nForam encontrados %d resultados" % resultados
-	conecta.close()
-	menu = raw_input()
-	opcaoUsuario()
 
 # =========================================================================================================================
 def funcAlterar(conecta):
@@ -110,138 +112,149 @@ def funcAlterar(conecta):
     menu = raw_input()
     opcaoUsuario()
 
-#=========================================================================================================================
+
+# =========================================================================================================================
 def funcExcluir(conecta):
+    print "\n\nDigite os dados:\n"
+    ide_exclusao = raw_input("ID a Excluir: ")
+    cursor = conecta.cursor()
 
-	print "\n\nDigite os dados:\n"
-	ide_exclusao = raw_input("ID a Excluir: ")
-	cursor = conecta.cursor()
+    sql = "DELETE FROM coordenada WHERE id='" + ide_exclusao + "'"
+    try:
+        cursor.execute(sql)
+        conecta.commit()
 
-	sql = "DELETE FROM coordenada WHERE id='"+ide_exclusao+"'"
-	try:
-        	cursor.execute(sql)
-		conecta.commit()
+    except pymysql.Error, e:
+        print "Erro: " + sql
+        print e
 
-    	except pymysql.Error, e:
-        	print "Erro: " + sql
-        	print e
+    print "Exclusao feita com Sucesso."
+    conecta.close()
+    menu = raw_input()
+    opcaoUsuario()
 
-	print "Exclusao feita com Sucesso."
-	conecta.close()
-	menu = raw_input()
-	opcaoUsuario()
 
 # =========================================================================================================================
 def funcMostrarTodos(conecta):
-	resultados = 0
-	cursor = conecta.cursor()
-	sql = "SELECT * FROM coordenada;"
+    resultados = 0
+    cursor = conecta.cursor()
+    sql = "SELECT * FROM coordenada;"
 
-	try:
-		cursor.execute(sql)
-		resultado = cursor.fetchall()
+    try:
+        cursor.execute(sql)
+        resultado = cursor.fetchall()
 
-		for dados in resultado:
-			ide = dados[0]
-			lat = dados[1]
-			lng = dados[2]
-			ponto_interesse = dados[3]
-			resultados = int(resultados)
-			resultados = resultados + 1
-			print"----------------------------------"
-			print " ID: %s\n Latitude: %s\n Longitude: %s\n Ponto de Interesse: %s" % (
-			ide, lat, lng, ponto_interesse)
-		conecta.commit()
+        for dados in resultado:
+            ide = dados[0]
+            lat = dados[1]
+            lng = dados[2]
+            ponto_interesse = dados[3]
+            resultados = int(resultados)
+            resultados = resultados + 1
+            print"----------------------------------"
+            print " ID: %s\n Latitude: %s\n Longitude: %s\n Ponto de Interesse: %s" % (
+                ide, lat, lng, ponto_interesse)
+        conecta.commit()
 
-	except pymysql.Error, e:
-		print "Erro: " + sql
-		print e
+    except pymysql.Error, e:
+        print "Erro: " + sql
+        print e
 
-	print "\n\nForam encontrados %d resultados" % resultados
-	conecta.close()
-	menu = raw_input()
-	opcaoUsuario()
+    print "\n\nForam encontrados %d resultados" % resultados
+    conecta.close()
+    menu = raw_input()
+    opcaoUsuario()
+
 
 def funcCoordenada(conecta):
-	print "\n\nDigite os dados:\n"
-	raio = float(raw_input("Informe o tamanho do raio: "))
-	lat = float(raw_input("Latitude: "))
-	lng = float(raw_input("Longitude: "))
-	resultados = 0
+    en = pyttsx.init()
+    en.setProperty('voice', b'brazil')
+    en.setProperty('rate', 150)
+    print "\n\nDigite os dados:\n"
+    raio = float(raw_input("Informe o tamanho do raio: "))
+    lat = float(raw_input("Latitude: "))
+    lng = float(raw_input("Longitude: "))
+    resultados = 0
+    cursor = conecta.cursor()
+    sql = ("SELECT *, (6371 * acos(cos(radians(" + str(lat) + ")) * cos(radians(lat)) * cos(radians(" + str(
+        lng) + ")- radians(lng)) + sin(radians(" + str(
+        lat) + ")) * sin(radians(lat))))AS distance FROM coordenada HAVING distance <= " + str(raio) + "")
 
-	cursor = conecta.cursor()
-	sql = ("SELECT *, (6371 * acos(cos(radians('"+lat+"')) * cos(radians(lat)) * cos(radians('"+lng+"')- radians(lng)) + sin(radians('" + lat + "')) * sin(radians(lat))))AS distance FROM coordenada HAVING distance <= '" + raio + "')")
+    try:
+        cursor.execute(sql)
+        resultado = cursor.fetchall()
 
-	try:
-		cursor.execute(sql)
-		resultado = cursor.fetchall()
+        for dados in resultado:
+            ide = dados[0]
+            lat = dados[1]
+            lng = dados[2]
+            ponto_interesse = dados[3]
+            distance = round(dados[4], 4)
+            distMetros = str(int(distance * 1000))
+            if distance >= 0.0005 and distance <= raio:
+                en.say(ponto_interesse + " a " + distMetros + " metros")
+                en.runAndWait()
+            print"------------------------------"
+            print " ID: %s\n Latitude: %s\n Longitude: %s\n Ponto de Interesse: %s\n Distancia: %s" % (
+                ide, lat, lng, ponto_interesse, distMetros + " metros")
+        conecta.commit()
 
-		for dados in resultado:
-			ide = dados[0]
-			lat = dados[1]
-			lng = dados[2]
-			ponto_interesse = dados[3]
-			distance = dados[4]
-			resultados = int(resultados)
-			resultados = resultados = + 1
-			print"------------------------------"
-			print " ID: %s\n Latitude: %s\n Longitude: %s\n Ponto de Interesse: %s\n Distancia: %s" %(
-				ide, lat, lng, ponto_interesse, distance)
-		conecta.commit()
+    except pymysql.Error, e:
+        print "Erro: " + sql
+        print e
 
-	except pymysql.Error, e:
-		print "Erro: " + sql
-		print e
+    print "\n\nForam encontrados %d resultados" % resultados
+    conecta.close
+    menu = raw_input()
+    opcaoUsuario()
 
-	print "\n\nForam encontrados %d resultados" % resultados
-	conecta.close
-	menu = raw_input()
-	opcaoUsuario()
 
-#=========================================================================================================================
+# =========================================================================================================================
 def opcaoUsuario():
-	print "==================================="
-	print "======= Banco de Coordenadas ========"
-	print "==================================="
-	opcao = raw_input("Escolha a opcao desejada\n\n[1] - Cadastrar\n[2] - Consultar\n[3] - Alterar\n[4] - Excluir\n[5] - Mostrar Todos\n[6] - Sair \n[7] - Consulta Ponto Interesse no Raio")
+    print "==================================="
+    print "======= Banco de Coordenadas ========"
+    print "==================================="
+    opcao = raw_input(
+        "Escolha a opcao desejada\n\n[1] - Cadastrar\n[2] - Consultar\n[3] - Alterar\n[4] - Excluir\n[5] - Mostrar Todos\n[6] - Sair \n[7] - Consulta Ponto Interesse no Raio")
 
-	try:
-		opcao = int(opcao)
-		if opcao < 1 or opcao > 7:
-			print "OPCAO INVALIDA: Verifique o valor digitado"
-			time.sleep(2)
-			opcaoUsuario()
-	except:
-		print "OPCAO INVALIDA: Verifique o valor digitado"
-		time.sleep(2)
-		opcaoUsuario()
-	if opcao == 1:
-		conecta = conectaBanco()
-		funcCadastrar(conecta)
+    try:
+        opcao = int(opcao)
+        if opcao < 1 or opcao > 7:
+            print "OPCAO INVALIDA: Verifique o valor digitado"
+            time.sleep(2)
+            opcaoUsuario()
+    except:
+        print "OPCAO INVALIDA: Verifique o valor digitado"
+        time.sleep(2)
+        opcaoUsuario()
+    if opcao == 1:
+        conecta = conectaBanco()
+        funcCadastrar(conecta)
 
-	elif opcao == 2:
-		conecta = conectaBanco()
-		funcConsultar(conecta)
+    elif opcao == 2:
+        conecta = conectaBanco()
+        funcConsultar(conecta)
 
-	elif opcao == 3:
-		conecta = conectaBanco()
-		funcAlterar(conecta)
+    elif opcao == 3:
+        conecta = conectaBanco()
+        funcAlterar(conecta)
 
-	elif opcao == 4:
-		conecta = conectaBanco()
-		funcExcluir(conecta)
+    elif opcao == 4:
+        conecta = conectaBanco()
+        funcExcluir(conecta)
 
-	elif opcao == 5:
-		conecta = conectaBanco()
-		funcMostrarTodos(conecta)
+    elif opcao == 5:
+        conecta = conectaBanco()
+        funcMostrarTodos(conecta)
 
-	elif opcao == 6:
-		sys.exit()
+    elif opcao == 6:
+        sys.exit()
 
-	elif opcao == 7:
-		conecta = conectaBanco()
-		funcCoordenada(conecta)
+    elif opcao == 7:
+        conecta = conectaBanco()
+        funcCoordenada(conecta)
 
-#=========================================================================================================================
-if __name__=='__main__':
-	opcaoUsuario()
+
+# =========================================================================================================================
+if __name__ == '__main__':
+    opcaoUsuario()
