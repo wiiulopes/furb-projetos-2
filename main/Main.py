@@ -1,3 +1,6 @@
+# ! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # Autor: Wiiu Lopes
 # Data: 10/10/2018
 # Linguagem: Python
@@ -7,8 +10,6 @@
 # citar e compartilhar desde que
 # mantida sua fonte e seu autor.
 # Obrigado.
-
-# ! /usr/bin/env python
 
 import time
 import sys
@@ -166,14 +167,75 @@ def funcMostrarTodos(conecta):
     opcaoUsuario()
 
 
+def funcSimulacao(conecta):
+    en = pyttsx.init()
+    en.setProperty('voice', b'brazil')
+    en.setProperty('rate', 200)
+    raio = 0.07
+    resultados = 0
+    idCount = 1
+    cursor = conecta.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM posicao_atual")
+    resultadoCount = cursor.fetchone()[0]
+
+    while idCount <= resultadoCount:
+        cursor.execute("SELECT * FROM posicao_atual WHERE id='" + str(idCount)+"'")
+        resultadosPosicaoAtual = cursor.fetchall()
+        for dadosP in resultadosPosicaoAtual:
+            lat = dadosP[1]
+            lng = dadosP[2]
+
+        print "\n\nPosição atual: Latitude " + str(lat) + " Logitude " + str(lng)
+        print "\n\nBuscando pontos de interesse no raio de " + str(raio * 1000) + " metros.\n"
+
+        sql = ("SELECT *, (6371 * acos(cos(radians(" + str(lat) + ")) * cos(radians(lat)) * cos(radians(" + str(
+            lng) + ")- radians(lng)) + sin(radians(" + str(
+            lat) + ")) * sin(radians(lat))))AS distance FROM coordenada HAVING distance <= " + str(raio) + "")
+
+        try:
+            cursor.execute(sql)
+            resultado = cursor.fetchall()
+            if not resultado:
+                print("Nenhum ponto de interesse no raio de "+ str(raio * 1000) + " metros.\n")
+                time.sleep(2)
+
+            for dados in resultado:
+                ide = dados[0]
+                lat = dados[1]
+                lng = dados[2]
+                ponto_interesse = dados[3]
+                distance = round(dados[4], 4)
+                distMetros = str(int(distance * 1000))
+                if distance >= 0.0005 and distance <= raio:
+                    en.say(ponto_interesse + " a " + distMetros + " metros")
+                    en.runAndWait()
+                    print"------------------------------"
+                    print " ID: %s\n Latitude: %s\n Longitude: %s\n Ponto de Interesse: %s\n Distancia: %s" % (
+                            ide, lat, lng, ponto_interesse, distMetros + " metros")
+            conecta.commit()
+
+        except pymysql.Error, e:
+            print "Erro: " + sql
+            print e
+
+
+        idCount+=1
+
+    conecta.close
+    menu = raw_input()
+    opcaoUsuario()
+
 def funcCoordenada(conecta):
     en = pyttsx.init()
     en.setProperty('voice', b'brazil')
-    en.setProperty('rate', 150)
+    en.setProperty('rate', 200)
     print "\n\nDigite os dados:\n"
-    raio = float(raw_input("Informe o tamanho do raio: "))
+    raioInit = float(raw_input("Informe o tamanho do raio em metros: "))
+    raio = raioInit/1000
     lat = float(raw_input("Latitude: "))
     lng = float(raw_input("Longitude: "))
+
     resultados = 0
     cursor = conecta.cursor()
     sql = ("SELECT *, (6371 * acos(cos(radians(" + str(lat) + ")) * cos(radians(lat)) * cos(radians(" + str(
@@ -194,9 +256,9 @@ def funcCoordenada(conecta):
             if distance >= 0.0005 and distance <= raio:
                 en.say(ponto_interesse + " a " + distMetros + " metros")
                 en.runAndWait()
-            print"------------------------------"
-            print " ID: %s\n Latitude: %s\n Longitude: %s\n Ponto de Interesse: %s\n Distancia: %s" % (
-                ide, lat, lng, ponto_interesse, distMetros + " metros")
+                print"------------------------------"
+                print " ID: %s\n Latitude: %s\n Longitude: %s\n Ponto de Interesse: %s\n Distancia: %s" % (
+                        ide, lat, lng, ponto_interesse, distMetros + " metros")
         conecta.commit()
 
     except pymysql.Error, e:
@@ -208,18 +270,17 @@ def funcCoordenada(conecta):
     menu = raw_input()
     opcaoUsuario()
 
-
 # =========================================================================================================================
 def opcaoUsuario():
     print "==================================="
     print "======= Banco de Coordenadas ========"
     print "==================================="
     opcao = raw_input(
-        "Escolha a opcao desejada\n\n[1] - Cadastrar\n[2] - Consultar\n[3] - Alterar\n[4] - Excluir\n[5] - Mostrar Todos\n[6] - Sair \n[7] - Consulta Ponto Interesse no Raio")
+        "Escolha a opcao desejada\n\n[1] - Cadastrar\n[2] - Consultar\n[3] - Alterar\n[4] - Excluir\n[5] - Mostrar Todos\n[6] - Sair \n[7] - Consulta Ponto Interesse no Raio \n[8] - Simulacão")
 
     try:
         opcao = int(opcao)
-        if opcao < 1 or opcao > 7:
+        if opcao < 1 or opcao > 8:
             print "OPCAO INVALIDA: Verifique o valor digitado"
             time.sleep(2)
             opcaoUsuario()
@@ -253,6 +314,10 @@ def opcaoUsuario():
     elif opcao == 7:
         conecta = conectaBanco()
         funcCoordenada(conecta)
+
+    elif opcao == 8:
+        conecta = conectaBanco()
+        funcSimulacao(conecta)
 
 
 # =========================================================================================================================
