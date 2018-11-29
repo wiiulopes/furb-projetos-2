@@ -15,7 +15,8 @@ import time
 import sys
 import pymysql
 import pyttsx
-
+import math
+import decimal
 # =========================================================================================================================
 def conectaBanco():
     HOST = "localhost"
@@ -187,6 +188,8 @@ def funcSimulacao(conecta):
             lng = dadosP[2]
 
         print "\n\nPosição atual: Latitude " + str(lat) + " Logitude " + str(lng)
+
+        pointA = lat, lng
         print "\n\nBuscando pontos de interesse no raio de " + str(raio * 1000) + " metros.\n"
 
         sql = ("SELECT *, (6371 * acos(cos(radians(" + str(lat) + ")) * cos(radians(lat)) * cos(radians(" + str(
@@ -207,12 +210,26 @@ def funcSimulacao(conecta):
                 ponto_interesse = dados[3]
                 distance = round(dados[4], 4)
                 distMetros = str(int(distance * 1000))
+                pointB = lat,lng
+                opcao = calculate_initial_compass_bearing(pointA, pointB)
                 if distance >= 0.0005 and distance <= raio:
-                    en.say(ponto_interesse + " a " + distMetros + " metros")
+                    if opcao >= 0.0 and opcao <= 90.0:
+                        direcao = "direita a frente"
+
+                    elif opcao  >= 91.0 and opcao <= 180.0:
+                        direcao = "direita atras"
+
+                    elif opcao >= 181.0 and opcao <= 270.0:
+                        direcao = "esquerda a tras"
+
+                    elif opcao >=  271.0 and opcao <= 360.0:
+                        direcao = "esquerda a frente"
+
+                    en.say(ponto_interesse + " a " + distMetros + " metros " + direcao)
                     en.runAndWait()
                     print"------------------------------"
                     print " ID: %s\n Latitude: %s\n Longitude: %s\n Ponto de Interesse: %s\n Distancia: %s" % (
-                            ide, lat, lng, ponto_interesse, distMetros + " metros")
+                            ide, lat, lng, ponto_interesse, distMetros + " metros " + direcao)
             conecta.commit()
 
         except pymysql.Error, e:
@@ -269,6 +286,27 @@ def funcCoordenada(conecta):
     conecta.close
     menu = raw_input()
     opcaoUsuario()
+
+def calculate_initial_compass_bearing(pointA, pointB):
+
+    if (type(pointA) != tuple) or (type(pointB) != tuple):
+        raise TypeError("Only tuples are supported as arguments")
+
+    lat1 = math.radians(pointA[0])
+    lat2 = math.radians(pointB[0])
+
+    diffLong = math.radians(pointB[1] - pointA[1])
+
+    x = math.sin(diffLong) * math.cos(lat2)
+    y = math.cos(lat1) * math.sin(lat2) - (math.sin(lat1)
+            * math.cos(lat2) * math.cos(diffLong))
+
+    initial_bearing = math.atan2(x, y)
+
+    initial_bearing = math.degrees(initial_bearing)
+    compass_bearing = (initial_bearing + 360) % 360
+
+    return compass_bearing
 
 # =========================================================================================================================
 def opcaoUsuario():
