@@ -38,7 +38,7 @@ def conectaBanco():
 
 def funcCadastrar(conecta):
     print "\n\nDigite os dados:\n"
-    pontoInteresse = str(raw_input("Nome Ponto Referencia: "))
+    pontoInteresse = str(raw_input("Nome Ponto Interesse: "))
     pontoInteresse = (pontoInteresse.upper())
     lat = float(raw_input("Latitude: "))
     lng = float(raw_input("Longitude: "))
@@ -60,7 +60,7 @@ def funcCadastrar(conecta):
 
 
 def funcConsultar(conecta):
-    name = str(raw_input("\nDigite o Ponto Interesse a Pesquisar: "))
+    name = str(raw_input("\nDigite o nome do Ponto Interesse a Pesquisar: "))
     name = (name.upper())
     resultados = 0
     cursor = conecta.cursor()
@@ -201,7 +201,7 @@ def funcSimulacao(conecta):
             resultado = cursor.fetchall()
             if not resultado:
                 print("Nenhum ponto de interesse no raio de "+ str(raio * 1000) + " metros.\n")
-                time.sleep(2)
+                time.sleep(3)
 
             for dados in resultado:
                 ide = dados[0]
@@ -311,10 +311,10 @@ def calculate_initial_compass_bearing(pointA, pointB):
 # =========================================================================================================================
 def opcaoUsuario():
     print "==================================="
-    print "======= Banco de Coordenadas ========"
+    print "======= Black Glasses ========"
     print "==================================="
     opcao = raw_input(
-        "Escolha a opcao desejada\n\n[1] - Cadastrar\n[2] - Consultar\n[3] - Alterar\n[4] - Excluir\n[5] - Mostrar Todos\n[6] - Sair \n[7] - Consulta Ponto Interesse no Raio \n[8] - Simulacão")
+        "Escolha a opcao desejada\n\n[1] - Cadastrar\n[2] - Consultar\n[3] - Alterar\n[4] - Excluir\n[5] - Mostrar Todos\n[6] - Consulta Ponto Interesse no Raio \n[7] - Simulacão\n[8] - Sair\n")
 
     try:
         opcao = int(opcao)
@@ -347,15 +347,15 @@ def opcaoUsuario():
         funcMostrarTodos(conecta)
 
     elif opcao == 6:
-        sys.exit()
-
-    elif opcao == 7:
         conecta = conectaBanco()
         funcCoordenada(conecta)
 
-    elif opcao == 8:
+    elif opcao == 7:
         conecta = conectaBanco()
         funcSimulacao(conecta)
+
+    elif opcao == 8:
+        sys.exit()
 
 
 # =========================================================================================================================
